@@ -1,4 +1,9 @@
+//go:generate stringer -type=TokenType
 package lox
+
+import (
+	"fmt"
+)
 
 type TokenType int
 
@@ -81,4 +86,19 @@ func NewToken(tokenType TokenType, lexeme string, object any, line int) Token {
 		Object:    object,
 		Line:      line,
 	}
+}
+
+func (t Token) String() string {
+	objectStr := ""
+	switch l := t.Object.(type) {
+	case string:
+		objectStr = l
+	case int:
+		objectStr = fmt.Sprintf("%d", l)
+	case float64:
+		objectStr = fmt.Sprintf("%f", l)
+	case nil:
+		objectStr = t.Lexeme
+	}
+	return fmt.Sprintf("Token{%s %s}", t.TokenType, objectStr)
 }

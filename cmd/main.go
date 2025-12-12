@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+
+	lox "github.com/mikowitz/glox"
 )
 
 type Lox struct {
@@ -51,5 +53,11 @@ func runPrompt() error {
 
 func run(source string) error {
 	fmt.Fprintln(os.Stdout, "received:", source)
+	scanner := lox.NewScanner(source)
+	err := scanner.ScanTokens()
+	if err != nil {
+		return err
+	}
+	fmt.Println(scanner.Tokens)
 	return nil
 }
