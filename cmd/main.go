@@ -8,10 +8,6 @@ import (
 	lox "github.com/mikowitz/glox"
 )
 
-type Lox struct {
-	hadError bool
-}
-
 func main() {
 	if len(os.Args) > 2 {
 		fmt.Fprintln(os.Stderr, "Usage: glox [script]")
@@ -52,12 +48,26 @@ func runPrompt() error {
 }
 
 func run(source string) error {
-	fmt.Fprintln(os.Stdout, "received:", source)
 	scanner := lox.NewScanner(source)
 	err := scanner.ScanTokens()
 	if err != nil {
 		return err
 	}
-	fmt.Println(scanner.Tokens)
+
+	parser := lox.NewParser(scanner.Tokens)
+	expr, err := parser.Parse()
+	if err != nil {
+		return err
+	}
+	// fmt.Println(printExpr(expr))
+	interpreter := lox.NewInterpreter()
+
+	result, err := interpreter.Interpret(expr)
+	if err != nil {
+		fmt.Printf("%v\n", err)
+		return err
+	}
+	fmt.Println(result)
+
 	return nil
 }

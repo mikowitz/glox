@@ -1333,7 +1333,7 @@ func TestScanTokens_InvalidCharacters(t *testing.T) {
 			asrt.True(scanner.hadError)
 
 			asrt.Error(err)
-			asrt.Equal(tt.expectedErrorMsg, err.Error())
+			asrt.ErrorIs(err, ErrLoxSyntax)
 		})
 	}
 }

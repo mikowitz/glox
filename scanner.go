@@ -2,6 +2,7 @@ package lox
 
 import (
 	"fmt"
+	"os"
 	"strconv"
 )
 
@@ -210,7 +211,9 @@ func (s *Scanner) isAtEnd() bool {
 }
 
 func (s *Scanner) reportError(msg string) error {
-	return fmt.Errorf("[line %d] Error: %s", s.line, msg)
+	err := fmt.Errorf("[line %d] %w: %s", s.line, ErrLoxSyntax, msg)
+	fmt.Fprintf(os.Stderr, "%v\n", err)
+	return err
 }
 
 func isDigit(r rune) bool {
