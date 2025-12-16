@@ -7,6 +7,7 @@ import (
 )
 
 type Scanner struct {
+	runtime        *Runtime
 	source         string
 	Tokens         []Token
 	start, current int
@@ -14,10 +15,11 @@ type Scanner struct {
 	hadError       bool
 }
 
-func NewScanner(source string) *Scanner {
+func NewScanner(lox *Runtime, source string) *Scanner {
 	return &Scanner{
-		source: source,
-		line:   1,
+		runtime: lox,
+		source:  source,
+		line:    1,
 	}
 }
 
@@ -211,6 +213,7 @@ func (s *Scanner) isAtEnd() bool {
 }
 
 func (s *Scanner) reportError(msg string) error {
+	s.runtime.HadSyntaxError = true
 	err := fmt.Errorf("[line %d] %w: %s", s.line, ErrLoxSyntax, msg)
 	fmt.Fprintf(os.Stderr, "%v\n", err)
 	return err

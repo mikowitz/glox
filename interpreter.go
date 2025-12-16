@@ -1,21 +1,28 @@
 package lox
 
-import "fmt"
+import (
+	"fmt"
+	"os"
+)
 
 type Interpreter struct {
-	result any
-	err    error
+	runtime   *Runtime
+	result    any
+	lastError error
 }
 
-func NewInterpreter() *Interpreter {
-	return &Interpreter{}
+func NewInterpreter(lox *Runtime) *Interpreter {
+	return &Interpreter{
+		runtime: lox,
+	}
 }
 
 func (i *Interpreter) Interpret(e Expr) (any, error) {
 	i.result = nil
-	i.err = nil
+	i.lastError = nil
+	i.runtime.HadRuntimeError = false
 	i.evaluate(e)
-	return i.result, i.err
+	return i.result, i.lastError
 }
 
 func (i *Interpreter) evaluate(e Expr) {
@@ -44,66 +51,65 @@ func (i *Interpreter) VisitBinary(b Binary) {
 	case EqualEqual:
 		i.result = l == r
 	case Greater:
-		l, r, err := checkNumbers(b.operator, l, r)
-		if err != nil {
-			i.err = err
+		l, r, ok := i.checkNumbers(b.operator, l, r)
+		if !ok {
 			return
 		}
 		i.result = l > r
 	case GreaterEqual:
-		l, r, err := checkNumbers(b.operator, l, r)
-		if err != nil {
-			i.err = err
+		l, r, ok := i.checkNumbers(b.operator, l, r)
+		if !ok {
 			return
 		}
 		i.result = l >= r
 	case Less:
-		l, r, err := checkNumbers(b.operator, l, r)
-		if err != nil {
-			i.err = err
+		l, r, ok := i.checkNumbers(b.operator, l, r)
+		if !ok {
 			return
 		}
 		i.result = l < r
 	case LessEqual:
-		l, r, err := checkNumbers(b.operator, l, r)
-		if err != nil {
-			i.err = err
+		l, r, ok := i.checkNumbers(b.operator, l, r)
+		if !ok {
 			return
 		}
 		i.result = l <= r
 	case Minus:
-		l, r, err := checkNumbers(b.operator, l, r)
-		if err != nil {
-			i.err = err
+		l, r, ok := i.checkNumbers(b.operator, l, r)
+		if !ok {
 			return
 		}
 		i.result = l - r
 	case Slash:
-		l, r, err := checkNumbers(b.operator, l, r)
-		if err != nil {
-			i.err = err
+		l, r, ok := i.checkNumbers(b.operator, l, r)
+		if !ok {
 			return
 		}
 		i.result = l / r
 	case Star:
-		l, r, err := checkNumbers(b.operator, l, r)
-		if err != nil {
-			i.err = err
+		l, r, ok := i.checkNumbers(b.operator, l, r)
+		if !ok {
 			return
 		}
 		i.result = l * r
 	case Plus:
-		lNum, rNum, err := checkNumbers(b.operator, l, r)
-		if err == nil {
-			i.result = lNum + rNum
-			return
+		// Try numbers first
+		if lNum, lOk := l.(float64); lOk {
+			if rNum, rOk := r.(float64); rOk {
+				i.result = lNum + rNum
+				return
+			}
 		}
-		lStr, rStr, strErr := checkStrings(b.operator, l, r)
-		if strErr == nil {
-			i.result = lStr + rStr
-			return
+		// Try strings
+		if lStr, lOk := l.(string); lOk {
+			if rStr, rOk := r.(string); rOk {
+				i.result = lStr + rStr
+				return
+			}
 		}
-		i.err = fmt.Errorf("operands to %s must both be numbers or strings", b.operator.Lexeme)
+		// Both failed, report error
+		err := fmt.Errorf("operands to %s must both be numbers or strings", b.operator.Lexeme)
+		i.reportError(err, b.operator)
 	}
 }
 
@@ -115,15 +121,21 @@ func (i *Interpreter) VisitUnary(u Unary) {
 
 	switch u.operator.TokenType {
 	case Minus:
-		n, err := checkNumber(u.operator, r)
-		if err != nil {
-			i.err = err
+		n, ok := i.checkNumber(u.operator, r)
+		if !ok {
 			return
 		}
 		i.result = -n
 	case Bang:
 		i.result = !isTruthy(r)
 	}
+}
+
+func (i *Interpreter) reportError(err error, token Token) {
+	i.runtime.HadRuntimeError = true
+	err = fmt.Errorf("[line %d] %w: %s", token.Line, ErrLoxRuntime, err.Error())
+	i.lastError = err
+	fmt.Fprintf(os.Stderr, "%v\n", err)
 }
 
 func isTruthy(object any) bool {
@@ -137,34 +149,38 @@ func isTruthy(object any) bool {
 	}
 }
 
-func checkNumber(operator Token, object any) (float64, error) {
+func (i *Interpreter) checkNumber(operator Token, object any) (float64, bool) {
 	n, ok := object.(float64)
 	if ok {
-		return n, nil
+		return n, true
 	}
-	return n, fmt.Errorf("operand to %s must be a number, got %v", operator.Lexeme, object)
+	err := fmt.Errorf("operand to %s must be a number", operator.Lexeme)
+	i.reportError(err, operator)
+	return 0, false
 }
 
-func checkNumbers(operator Token, left, right any) (float64, float64, error) {
+func (i *Interpreter) checkNumbers(operator Token, left, right any) (float64, float64, bool) {
 	l, lok := left.(float64)
 	r, rok := right.(float64)
 
 	if lok && rok {
-		return l, r, nil
+		return l, r, true
 	}
 
-	return l, r, fmt.Errorf("operands to %s must both be numbers, got %T, %T",
-		operator.Lexeme, left, right)
+	err := fmt.Errorf("operands to %s must both be numbers", operator.Lexeme)
+	i.reportError(err, operator)
+	return 0, 0, false
 }
 
-func checkStrings(operator Token, left, right any) (string, string, error) {
+func (i *Interpreter) checkStrings(operator Token, left, right any) (string, string, bool) {
 	l, lok := left.(string)
 	r, rok := right.(string)
 
 	if lok && rok {
-		return l, r, nil
+		return l, r, true
 	}
 
-	return l, r, fmt.Errorf("operands to %s must both be strings, got %T, %T",
-		operator.Lexeme, left, right)
+	err := fmt.Errorf("operands to %s must both be strings", operator.Lexeme)
+	i.reportError(err, operator)
+	return "", "", false
 }

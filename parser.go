@@ -7,13 +7,15 @@ import (
 )
 
 type Parser struct {
+	runtime *Runtime
 	tokens  []Token
 	current int
 }
 
-func NewParser(tokens []Token) *Parser {
+func NewParser(lox *Runtime, tokens []Token) *Parser {
 	return &Parser{
-		tokens: tokens,
+		runtime: lox,
+		tokens:  tokens,
 	}
 }
 
@@ -134,7 +136,7 @@ func (p *Parser) primary() (Expr, error) {
 		if err != nil {
 			return nil, err
 		}
-		_, err = p.consume(RightParen, "Expect ')' after expression.")
+		_, err = p.consume(RightParen, "expect ')' after expression")
 		if err != nil {
 			return nil, err
 		}
@@ -142,15 +144,7 @@ func (p *Parser) primary() (Expr, error) {
 		return Group{expr: expr}, nil
 	}
 
-	token := p.peek()
-	var err error
-	if token.TokenType == EOF {
-		err = fmt.Errorf("[line %d] Error at end: expect expression", token.Line)
-	} else {
-		err = fmt.Errorf("[line %d] Error at '%s': expect expression", token.Line, token.Lexeme)
-	}
-
-	fmt.Fprintf(os.Stderr, "%v\n", err)
+	err := p.reportError("expect expression")
 	return nil, err
 }
 
@@ -159,16 +153,8 @@ func (p *Parser) consume(tokenType TokenType, msg string) (Token, error) {
 		return p.advance(), nil
 	}
 
-	token := p.peek()
-	var err error
-	if token.TokenType == EOF {
-		err = fmt.Errorf("[line %d] Error at end: %s", token.Line, msg)
-	} else {
-		err = fmt.Errorf("[line %d] Error at '%s': %s", token.Line, token.Lexeme, msg)
-	}
-
-	fmt.Fprintf(os.Stderr, "%v\n", err)
-	return token, err
+	err := p.reportError(msg)
+	return p.peek(), err
 }
 
 func (p *Parser) match(tokenTypes ...TokenType) bool {
@@ -207,4 +193,34 @@ func (p *Parser) peek() Token {
 
 func (p *Parser) previous() Token {
 	return p.tokens[p.current-1]
+}
+
+func (p *Parser) reportError(msg string) error {
+	p.runtime.HadSyntaxError = true
+	token := p.peek()
+	location := fmt.Sprintf("at '%s'", token.Lexeme)
+	if p.isAtEnd() {
+		location = "at end"
+	}
+
+	err := fmt.Errorf("[line %d] %w %s: %s", token.Line, ErrLoxSyntax, location, msg)
+	fmt.Fprintf(os.Stderr, "%v\n", err)
+	return err
+}
+
+func (p *Parser) synchronize() {
+	p.advance()
+
+	for !p.isAtEnd() {
+		if p.previous().TokenType == Semicolon {
+			return
+		}
+
+		switch p.peek().TokenType {
+		case Class, Fun, Var, For, If, While, Print, Return:
+			return
+		}
+
+		p.advance()
+	}
 }

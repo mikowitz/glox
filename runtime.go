@@ -8,6 +8,6 @@ var (
 )
 
 type Runtime struct {
-	hadError        bool
-	hadRuntimeError bool
+	HadSyntaxError  bool
+	HadRuntimeError bool
 }

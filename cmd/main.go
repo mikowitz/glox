@@ -9,65 +9,63 @@ import (
 )
 
 func main() {
+	runtime := &lox.Runtime{}
 	if len(os.Args) > 2 {
 		fmt.Fprintln(os.Stderr, "Usage: glox [script]")
 		os.Exit(64)
 	} else if len(os.Args) == 2 {
-		if err := runFile(os.Args[1]); err != nil {
-			fmt.Fprintf(os.Stderr, "%v\n", err)
+		// if err := runFile(os.Args[1]); err != nil {
+		runFile(runtime, os.Args[1])
+		if runtime.HadSyntaxError {
 			os.Exit(65)
 		}
 	} else {
-		if err := runPrompt(); err != nil {
-			fmt.Fprintf(os.Stderr, "%v\n", err)
-			os.Exit(1)
-		}
+		runPrompt(runtime)
 	}
 }
 
-func runFile(filename string) error {
+func runFile(runtime *lox.Runtime, filename string) {
 	bytes, err := os.ReadFile(filename)
 	if err != nil {
-		return err
+		os.Exit(66)
 	}
-	return run(string(bytes))
+	run(runtime, string(bytes))
 }
 
-func runPrompt() error {
+func runPrompt(runtime *lox.Runtime) {
 	scanner := bufio.NewScanner(os.Stdin)
 
 	for {
 		fmt.Fprint(os.Stdout, "> ")
 		if scanner.Scan() {
-			_ = run(scanner.Text())
+			run(runtime, scanner.Text())
+			runtime.HadSyntaxError = false
+			runtime.HadRuntimeError = false
 		} else {
-			break
+			os.Exit(74)
 		}
 	}
-	return scanner.Err()
 }
 
-func run(source string) error {
-	scanner := lox.NewScanner(source)
-	err := scanner.ScanTokens()
-	if err != nil {
-		return err
+func run(runtime *lox.Runtime, source string) {
+	scanner := lox.NewScanner(runtime, source)
+	scanner.ScanTokens()
+	if runtime.HadSyntaxError {
+		return
 	}
 
-	parser := lox.NewParser(scanner.Tokens)
-	expr, err := parser.Parse()
-	if err != nil {
-		return err
-	}
-	// fmt.Println(printExpr(expr))
-	interpreter := lox.NewInterpreter()
+	parser := lox.NewParser(runtime, scanner.Tokens)
+	expr, _ := parser.Parse()
 
-	result, err := interpreter.Interpret(expr)
-	if err != nil {
-		fmt.Printf("%v\n", err)
-		return err
+	if runtime.HadSyntaxError {
+		return
 	}
+
+	interpreter := lox.NewInterpreter(runtime)
+	result, _ := interpreter.Interpret(expr)
+	if runtime.HadRuntimeError {
+		return
+	}
+
 	fmt.Println(result)
-
-	return nil
 }
