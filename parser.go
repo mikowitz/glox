@@ -1,6 +1,7 @@
 package lox
 
 import (
+	"errors"
 	"fmt"
 	"slices"
 )
@@ -8,6 +9,7 @@ import (
 type Parser struct {
 	tokens  []Token
 	current int
+	errors  []error
 }
 
 func NewParser(tokens []Token) *Parser {
@@ -16,8 +18,48 @@ func NewParser(tokens []Token) *Parser {
 	}
 }
 
-func (p *Parser) Parse() (Expr, error) {
-	return p.expression()
+func (p *Parser) Parse() ([]Stmt, error) {
+	statements := []Stmt{}
+	for !p.isAtEnd() {
+		stmt, err := p.statement()
+		if err != nil {
+			p.errors = append(p.errors, err)
+		}
+		statements = append(statements, stmt)
+	}
+	return statements, errors.Join(p.errors...)
+}
+
+func (p *Parser) statement() (Stmt, error) {
+	if p.match(Print) {
+		return p.printStatement()
+	}
+	return p.expressionStatement()
+}
+
+func (p *Parser) printStatement() (Stmt, error) {
+	expr, err := p.expression()
+	if err != nil {
+		return nil, err
+	}
+	_, err = p.consume(Semicolon, "expect ';' after value")
+	if err != nil {
+		return nil, err
+	}
+
+	return PrintStmt{expression: expr}, err
+}
+
+func (p *Parser) expressionStatement() (Stmt, error) {
+	expr, err := p.expression()
+	if err != nil {
+		return nil, err
+	}
+	_, err = p.consume(Semicolon, "expect ';' after expression")
+	if err != nil {
+		return nil, err
+	}
+	return ExprStmt{expression: expr}, nil
 }
 
 func (p *Parser) expression() (Expr, error) {
@@ -198,7 +240,8 @@ func (p *Parser) reportError(msg string) error {
 		location = "at end"
 	}
 
-	return fmt.Errorf("[line %d] %w %s: %s", token.Line, ErrLoxSyntax, location, msg)
+	err := fmt.Errorf("[line %d] %w %s: %s", token.Line, ErrLoxSyntax, location, msg)
+	return err
 }
 
 func (p *Parser) synchronize() {

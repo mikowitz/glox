@@ -5,6 +5,8 @@ type Visitor interface {
 	VisitUnary(u Unary)
 	VisitGroup(g Group)
 	VisitLiteral(l Literal)
+	VisitExprStmt(e ExprStmt)
+	VisitPrintStmt(p PrintStmt)
 }
 
 type Expr interface {

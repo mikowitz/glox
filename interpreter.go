@@ -3,6 +3,7 @@ package lox
 import (
 	"errors"
 	"fmt"
+	"os"
 )
 
 type Interpreter struct {
@@ -14,14 +15,20 @@ func NewInterpreter() *Interpreter {
 	return &Interpreter{}
 }
 
-func (i *Interpreter) Interpret(e Expr) (any, error) {
+func (i *Interpreter) Interpret(stmts []Stmt) (any, error) {
 	i.result = nil
 	i.errors = []error{}
-	i.evaluate(e)
+	for _, stmt := range stmts {
+		i.execute(stmt)
+	}
 	if len(i.errors) > 0 {
 		return i.result, errors.Join(i.errors...)
 	}
 	return i.result, nil
+}
+
+func (i *Interpreter) execute(s Stmt) {
+	s.Accept(i)
 }
 
 func (i *Interpreter) evaluate(e Expr) {
@@ -128,6 +135,15 @@ func (i *Interpreter) VisitUnary(u Unary) {
 	case Bang:
 		i.result = !isTruthy(r)
 	}
+}
+
+func (i *Interpreter) VisitExprStmt(e ExprStmt) {
+	i.evaluate(e.expression)
+}
+
+func (i *Interpreter) VisitPrintStmt(p PrintStmt) {
+	i.evaluate(p.expression)
+	fmt.Fprintln(os.Stdout, i.result)
 }
 
 func (i *Interpreter) reportError(err error, token Token) {

@@ -36,6 +36,10 @@ func (ap *AstPrinter) VisitLiteral(l Literal) {
 	}
 }
 
+func (ap *AstPrinter) VisitExprStmt(e ExprStmt) {}
+
+func (ap *AstPrinter) VisitPrintStmt(p PrintStmt) {}
+
 // printExpr is a helper function to convert any expression to its string representation
 func printExpr(expr Expr) string {
 	printer := &AstPrinter{}

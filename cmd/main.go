@@ -58,19 +58,15 @@ func run(source string) int {
 		return ExitSyntaxError
 	}
 
-	fmt.Printf("%+#v\n", tokens)
-
 	parser := lox.NewParser(tokens)
-	expr, err := parser.Parse()
+	stmts, err := parser.Parse()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return ExitSyntaxError
 	}
 
-	fmt.Printf("%+#v\n", expr)
-
 	interpreter := lox.NewInterpreter()
-	result, err := interpreter.Interpret(expr)
+	result, err := interpreter.Interpret(stmts)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return ExitRuntimeError

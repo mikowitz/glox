@@ -56,7 +56,8 @@ func TestInterpreter_Literals(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			asrt := assert.New(t)
 			interp := NewInterpreter()
-			result, err := interp.Interpret(tt.expr)
+			stmts := []Stmt{ExprStmt{expression: tt.expr}}
+			result, err := interp.Interpret(stmts)
 
 			if tt.wantErr {
 				asrt.Error(err)
@@ -176,7 +177,8 @@ func TestInterpreter_UnaryOperations(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			asrt := assert.New(t)
 			interp := NewInterpreter()
-			result, err := interp.Interpret(tt.expr)
+			stmts := []Stmt{ExprStmt{expression: tt.expr}}
+			result, err := interp.Interpret(stmts)
 
 			if tt.wantErr {
 				asrt.Error(err)
@@ -265,7 +267,8 @@ func TestInterpreter_ArithmeticOperations(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			asrt := assert.New(t)
 			interp := NewInterpreter()
-			result, err := interp.Interpret(tt.expr)
+			stmts := []Stmt{ExprStmt{expression: tt.expr}}
+			result, err := interp.Interpret(stmts)
 
 			if tt.wantErr {
 				asrt.Error(err)
@@ -336,7 +339,8 @@ func TestInterpreter_StringOperations(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			asrt := assert.New(t)
 			interp := NewInterpreter()
-			result, err := interp.Interpret(tt.expr)
+			stmts := []Stmt{ExprStmt{expression: tt.expr}}
+			result, err := interp.Interpret(stmts)
 
 			if tt.wantErr {
 				asrt.Error(err)
@@ -470,7 +474,8 @@ func TestInterpreter_ComparisonOperations(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			asrt := assert.New(t)
 			interp := NewInterpreter()
-			result, err := interp.Interpret(tt.expr)
+			stmts := []Stmt{ExprStmt{expression: tt.expr}}
+			result, err := interp.Interpret(stmts)
 
 			if tt.wantErr {
 				asrt.Error(err)
@@ -594,7 +599,8 @@ func TestInterpreter_EqualityOperations(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			asrt := assert.New(t)
 			interp := NewInterpreter()
-			result, err := interp.Interpret(tt.expr)
+			stmts := []Stmt{ExprStmt{expression: tt.expr}}
+			result, err := interp.Interpret(stmts)
 
 			asrt.NoError(err)
 			asrt.Equal(tt.expected, result)
@@ -639,7 +645,8 @@ func TestInterpreter_GroupedExpressions(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			asrt := assert.New(t)
 			interp := NewInterpreter()
-			result, err := interp.Interpret(tt.expr)
+			stmts := []Stmt{ExprStmt{expression: tt.expr}}
+			result, err := interp.Interpret(stmts)
 
 			asrt.NoError(err)
 			asrt.Equal(tt.expected, result)
@@ -734,7 +741,8 @@ func TestInterpreter_ComplexExpressions(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			asrt := assert.New(t)
 			interp := NewInterpreter()
-			result, err := interp.Interpret(tt.expr)
+			stmts := []Stmt{ExprStmt{expression: tt.expr}}
+			result, err := interp.Interpret(stmts)
 
 			asrt.NoError(err)
 			asrt.Equal(tt.expected, result)
@@ -792,7 +800,8 @@ func TestInterpreter_TypeErrors(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			asrt := assert.New(t)
 			interp := NewInterpreter()
-			_, err := interp.Interpret(tt.expr)
+			stmts := []Stmt{ExprStmt{expression: tt.expr}}
+			_, err := interp.Interpret(stmts)
 
 			asrt.Error(err)
 		})
@@ -867,7 +876,8 @@ func TestInterpreter_Truthiness(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			asrt := assert.New(t)
 			interp := NewInterpreter()
-			result, err := interp.Interpret(tt.expr)
+			stmts := []Stmt{ExprStmt{expression: tt.expr}}
+			result, err := interp.Interpret(stmts)
 
 			asrt.NoError(err)
 			asrt.Equal(tt.expected, result)
