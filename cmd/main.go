@@ -8,56 +8,74 @@ import (
 	lox "github.com/mikowitz/glox"
 )
 
-type Lox struct {
-	hadError bool
-}
+const (
+	ExitSuccess      = 0
+	ExitUsageError   = 64
+	ExitSyntaxError  = 65
+	ExitInputError   = 66
+	ExitRuntimeError = 70
+	ExitIOError      = 74
+)
 
 func main() {
 	if len(os.Args) > 2 {
 		fmt.Fprintln(os.Stderr, "Usage: glox [script]")
-		os.Exit(64)
+		os.Exit(ExitUsageError)
 	} else if len(os.Args) == 2 {
-		if err := runFile(os.Args[1]); err != nil {
-			fmt.Fprintf(os.Stderr, "%v\n", err)
-			os.Exit(65)
-		}
+		exitCode := runFile(os.Args[1])
+		os.Exit(exitCode)
 	} else {
-		if err := runPrompt(); err != nil {
-			fmt.Fprintf(os.Stderr, "%v\n", err)
-			os.Exit(1)
-		}
+		runPrompt()
 	}
 }
 
-func runFile(filename string) error {
+func runFile(filename string) int {
 	bytes, err := os.ReadFile(filename)
 	if err != nil {
-		return err
+		return ExitInputError
 	}
 	return run(string(bytes))
 }
 
-func runPrompt() error {
+func runPrompt() {
 	scanner := bufio.NewScanner(os.Stdin)
 
 	for {
 		fmt.Fprint(os.Stdout, "> ")
 		if scanner.Scan() {
-			_ = run(scanner.Text())
+			run(scanner.Text())
 		} else {
-			break
+			os.Exit(ExitIOError)
 		}
 	}
-	return scanner.Err()
 }
 
-func run(source string) error {
-	fmt.Fprintln(os.Stdout, "received:", source)
+func run(source string) int {
 	scanner := lox.NewScanner(source)
-	err := scanner.ScanTokens()
+	tokens, err := scanner.ScanTokens()
 	if err != nil {
-		return err
+		fmt.Fprintln(os.Stderr, err)
+		return ExitSyntaxError
 	}
-	fmt.Println(scanner.Tokens)
-	return nil
+
+	fmt.Printf("%+#v\n", tokens)
+
+	parser := lox.NewParser(tokens)
+	expr, err := parser.Parse()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return ExitSyntaxError
+	}
+
+	fmt.Printf("%+#v\n", expr)
+
+	interpreter := lox.NewInterpreter()
+	result, err := interpreter.Interpret(expr)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return ExitRuntimeError
+	}
+
+	fmt.Println(result)
+	return ExitSuccess
 }

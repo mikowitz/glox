@@ -1221,11 +1221,10 @@ func TestScanTokens(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			asrt := assert.New(t)
 			scanner := NewScanner(tt.source)
-			err := scanner.ScanTokens()
+			tokens, err := scanner.ScanTokens()
 
-			asrt.False(scanner.hadError)
 			asrt.NoError(err)
-			asrt.Equal(tt.expected, scanner.Tokens)
+			asrt.Equal(tt.expected, tokens)
 		})
 	}
 }
@@ -1328,12 +1327,10 @@ func TestScanTokens_InvalidCharacters(t *testing.T) {
 			asrt := assert.New(t)
 
 			scanner := NewScanner(tt.source)
-			err := scanner.ScanTokens()
-
-			asrt.True(scanner.hadError)
+			_, err := scanner.ScanTokens()
 
 			asrt.Error(err)
-			asrt.Equal(tt.expectedErrorMsg, err.Error())
+			asrt.ErrorIs(err, ErrLoxSyntax)
 		})
 	}
 }
