@@ -14,7 +14,6 @@ func main() {
 		fmt.Fprintln(os.Stderr, "Usage: glox [script]")
 		os.Exit(64)
 	} else if len(os.Args) == 2 {
-		// if err := runFile(os.Args[1]); err != nil {
 		runFile(runtime, os.Args[1])
 		if runtime.HadSyntaxError {
 			os.Exit(65)
@@ -62,7 +61,7 @@ func run(runtime *lox.Runtime, source string) {
 	}
 
 	interpreter := lox.NewInterpreter(runtime)
-	result, _ := interpreter.Interpret(expr)
+	result := interpreter.Interpret(expr)
 	if runtime.HadRuntimeError {
 		return
 	}

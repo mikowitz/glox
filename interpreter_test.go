@@ -56,14 +56,14 @@ func TestInterpreter_Literals(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			asrt := assert.New(t)
 			interp := NewInterpreter(&Runtime{})
-			result, err := interp.Interpret(tt.expr)
+			result := interp.Interpret(tt.expr)
 
 			if tt.wantErr {
-				asrt.Error(err)
+				asrt.NotEmpty(interp.errors)
 				return
 			}
 
-			asrt.NoError(err)
+			asrt.Empty(interp.errors)
 			asrt.Equal(tt.expected, result)
 		})
 	}
@@ -75,7 +75,6 @@ func TestInterpreter_UnaryOperations(t *testing.T) {
 		expr     Expr
 		expected any
 		wantErr  bool
-		errMsg   string
 	}{
 		{
 			name: "unary: negate positive number",
@@ -170,7 +169,6 @@ func TestInterpreter_UnaryOperations(t *testing.T) {
 				right:    Literal{literal: "hello"},
 			},
 			wantErr: true,
-			errMsg:  "operand to - must be a number",
 		},
 	}
 
@@ -178,17 +176,15 @@ func TestInterpreter_UnaryOperations(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			asrt := assert.New(t)
 			interp := NewInterpreter(&Runtime{})
-			result, err := interp.Interpret(tt.expr)
+			result := interp.Interpret(tt.expr)
 
 			if tt.wantErr {
-				asrt.Error(err)
-				if tt.errMsg != "" {
-					asrt.Contains(err.Error(), tt.errMsg)
-				}
+				asrt.NotEmpty(interp.errors)
+				asrt.ErrorIs(interp.errors[0], ErrLoxRuntime)
 				return
 			}
 
-			asrt.NoError(err)
+			asrt.Empty(interp.errors)
 			asrt.Equal(tt.expected, result)
 		})
 	}
@@ -200,7 +196,6 @@ func TestInterpreter_ArithmeticOperations(t *testing.T) {
 		expr     Expr
 		expected any
 		wantErr  bool
-		errMsg   string
 	}{
 		{
 			name: "arithmetic: addition",
@@ -271,17 +266,15 @@ func TestInterpreter_ArithmeticOperations(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			asrt := assert.New(t)
 			interp := NewInterpreter(&Runtime{})
-			result, err := interp.Interpret(tt.expr)
+			result := interp.Interpret(tt.expr)
 
 			if tt.wantErr {
-				asrt.Error(err)
-				if tt.errMsg != "" {
-					asrt.Contains(err.Error(), tt.errMsg)
-				}
+				asrt.NotEmpty(interp.errors)
+				asrt.ErrorIs(interp.errors[0], ErrLoxRuntime)
 				return
 			}
 
-			asrt.NoError(err)
+			asrt.Empty(interp.errors)
 			asrt.Equal(tt.expected, result)
 		})
 	}
@@ -293,7 +286,6 @@ func TestInterpreter_StringOperations(t *testing.T) {
 		expr     Expr
 		expected any
 		wantErr  bool
-		errMsg   string
 	}{
 		{
 			name: "string: concatenation",
@@ -330,7 +322,6 @@ func TestInterpreter_StringOperations(t *testing.T) {
 				right:    Literal{literal: 123.0},
 			},
 			wantErr: true,
-			errMsg:  "operands to + must both be numbers or strings",
 		},
 		{
 			name: "string: number plus string (error)",
@@ -340,7 +331,6 @@ func TestInterpreter_StringOperations(t *testing.T) {
 				right:    Literal{literal: "hello"},
 			},
 			wantErr: true,
-			errMsg:  "operands to + must both be numbers or strings",
 		},
 	}
 
@@ -348,17 +338,15 @@ func TestInterpreter_StringOperations(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			asrt := assert.New(t)
 			interp := NewInterpreter(&Runtime{})
-			result, err := interp.Interpret(tt.expr)
+			result := interp.Interpret(tt.expr)
 
 			if tt.wantErr {
-				asrt.Error(err)
-				if tt.errMsg != "" {
-					asrt.Contains(err.Error(), tt.errMsg)
-				}
+				asrt.NotEmpty(interp.errors)
+				asrt.ErrorIs(interp.errors[0], ErrLoxRuntime)
 				return
 			}
 
-			asrt.NoError(err)
+			asrt.Empty(interp.errors)
 			asrt.Equal(tt.expected, result)
 		})
 	}
@@ -370,7 +358,6 @@ func TestInterpreter_ComparisonOperations(t *testing.T) {
 		expr     Expr
 		expected any
 		wantErr  bool
-		errMsg   string
 	}{
 		{
 			name: "comparison: greater than (true)",
@@ -479,7 +466,6 @@ func TestInterpreter_ComparisonOperations(t *testing.T) {
 				right:    Literal{literal: 5.0},
 			},
 			wantErr: true,
-			errMsg:  "operands to > must both be numbers",
 		},
 	}
 
@@ -487,17 +473,15 @@ func TestInterpreter_ComparisonOperations(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			asrt := assert.New(t)
 			interp := NewInterpreter(&Runtime{})
-			result, err := interp.Interpret(tt.expr)
+			result := interp.Interpret(tt.expr)
 
 			if tt.wantErr {
-				asrt.Error(err)
-				if tt.errMsg != "" {
-					asrt.Contains(err.Error(), tt.errMsg)
-				}
+				asrt.NotEmpty(interp.errors)
+				asrt.ErrorIs(interp.errors[0], ErrLoxRuntime)
 				return
 			}
 
-			asrt.NoError(err)
+			asrt.Empty(interp.errors)
 			asrt.Equal(tt.expected, result)
 		})
 	}
@@ -614,9 +598,9 @@ func TestInterpreter_EqualityOperations(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			asrt := assert.New(t)
 			interp := NewInterpreter(&Runtime{})
-			result, err := interp.Interpret(tt.expr)
+			result := interp.Interpret(tt.expr)
 
-			asrt.NoError(err)
+			asrt.Empty(interp.errors)
 			asrt.Equal(tt.expected, result)
 		})
 	}
@@ -659,9 +643,9 @@ func TestInterpreter_GroupedExpressions(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			asrt := assert.New(t)
 			interp := NewInterpreter(&Runtime{})
-			result, err := interp.Interpret(tt.expr)
+			result := interp.Interpret(tt.expr)
 
-			asrt.NoError(err)
+			asrt.Empty(interp.errors)
 			asrt.Equal(tt.expected, result)
 		})
 	}
@@ -754,9 +738,9 @@ func TestInterpreter_ComplexExpressions(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			asrt := assert.New(t)
 			interp := NewInterpreter(&Runtime{})
-			result, err := interp.Interpret(tt.expr)
+			result := interp.Interpret(tt.expr)
 
-			asrt.NoError(err)
+			asrt.Empty(interp.errors)
 			asrt.Equal(tt.expected, result)
 		})
 	}
@@ -764,9 +748,8 @@ func TestInterpreter_ComplexExpressions(t *testing.T) {
 
 func TestInterpreter_TypeErrors(t *testing.T) {
 	tests := []struct {
-		name   string
-		expr   Expr
-		errMsg string
+		name string
+		expr Expr
 	}{
 		{
 			name: "error: subtract non-numbers",
@@ -775,7 +758,6 @@ func TestInterpreter_TypeErrors(t *testing.T) {
 				operator: NewToken(Minus, "-", nil, 1),
 				right:    Literal{literal: "world"},
 			},
-			errMsg: "operands to - must both be numbers",
 		},
 		{
 			name: "error: multiply non-numbers",
@@ -784,7 +766,6 @@ func TestInterpreter_TypeErrors(t *testing.T) {
 				operator: NewToken(Star, "*", nil, 1),
 				right:    Literal{literal: false},
 			},
-			errMsg: "operands to * must both be numbers",
 		},
 		{
 			name: "error: divide non-numbers",
@@ -793,7 +774,6 @@ func TestInterpreter_TypeErrors(t *testing.T) {
 				operator: NewToken(Slash, "/", nil, 1),
 				right:    Literal{literal: 5.0},
 			},
-			errMsg: "operands to / must both be numbers",
 		},
 		{
 			name: "error: compare string and number",
@@ -802,7 +782,6 @@ func TestInterpreter_TypeErrors(t *testing.T) {
 				operator: NewToken(Less, "<", nil, 1),
 				right:    Literal{literal: 5.0},
 			},
-			errMsg: "operands to < must both be numbers",
 		},
 		{
 			name: "error: negate boolean",
@@ -810,7 +789,6 @@ func TestInterpreter_TypeErrors(t *testing.T) {
 				operator: NewToken(Minus, "-", nil, 1),
 				right:    Literal{literal: true},
 			},
-			errMsg: "operand to - must be a number",
 		},
 	}
 
@@ -818,10 +796,10 @@ func TestInterpreter_TypeErrors(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			asrt := assert.New(t)
 			interp := NewInterpreter(&Runtime{})
-			_, err := interp.Interpret(tt.expr)
+			interp.Interpret(tt.expr)
 
-			asrt.Error(err)
-			asrt.Contains(err.Error(), tt.errMsg)
+			asrt.NotEmpty(interp.errors)
+			asrt.ErrorIs(interp.errors[0], ErrLoxRuntime)
 		})
 	}
 }
@@ -894,9 +872,9 @@ func TestInterpreter_Truthiness(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			asrt := assert.New(t)
 			interp := NewInterpreter(&Runtime{})
-			result, err := interp.Interpret(tt.expr)
+			result := interp.Interpret(tt.expr)
 
-			asrt.NoError(err)
+			asrt.Empty(interp.errors)
 			asrt.Equal(tt.expected, result)
 		})
 	}

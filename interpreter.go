@@ -6,9 +6,9 @@ import (
 )
 
 type Interpreter struct {
-	runtime   *Runtime
-	result    any
-	lastError error
+	runtime *Runtime
+	result  any
+	errors  []error
 }
 
 func NewInterpreter(lox *Runtime) *Interpreter {
@@ -17,12 +17,12 @@ func NewInterpreter(lox *Runtime) *Interpreter {
 	}
 }
 
-func (i *Interpreter) Interpret(e Expr) (any, error) {
+func (i *Interpreter) Interpret(e Expr) any {
 	i.result = nil
-	i.lastError = nil
+	i.errors = []error{}
 	i.runtime.HadRuntimeError = false
 	i.evaluate(e)
-	return i.result, i.lastError
+	return i.result
 }
 
 func (i *Interpreter) evaluate(e Expr) {
@@ -134,7 +134,7 @@ func (i *Interpreter) VisitUnary(u Unary) {
 func (i *Interpreter) reportError(err error, token Token) {
 	i.runtime.HadRuntimeError = true
 	err = fmt.Errorf("[line %d] %w: %s", token.Line, ErrLoxRuntime, err.Error())
-	i.lastError = err
+	i.errors = append(i.errors, err)
 	fmt.Fprintf(os.Stderr, "%v\n", err)
 }
 
