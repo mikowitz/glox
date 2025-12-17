@@ -37,7 +37,7 @@ func (p *Parser) equality() (Expr, error) {
 			return nil, err
 		}
 
-		return Binary{left: expr, right: right, operator: op}, nil
+		expr = Binary{left: expr, right: right, operator: op}
 	}
 
 	return expr, nil
@@ -56,7 +56,7 @@ func (p *Parser) comparison() (Expr, error) {
 			return nil, err
 		}
 
-		return Binary{left: expr, right: right, operator: op}, nil
+		expr = Binary{left: expr, right: right, operator: op}
 	}
 
 	return expr, nil
@@ -75,7 +75,7 @@ func (p *Parser) term() (Expr, error) {
 			return nil, err
 		}
 
-		return Binary{left: expr, right: right, operator: op}, nil
+		expr = Binary{left: expr, right: right, operator: op}
 	}
 
 	return expr, nil
@@ -94,7 +94,7 @@ func (p *Parser) factor() (Expr, error) {
 			return nil, err
 		}
 
-		return Binary{left: expr, right: right, operator: op}, nil
+		expr = Binary{left: expr, right: right, operator: op}
 	}
 
 	return expr, nil
@@ -155,10 +155,9 @@ func (p *Parser) consume(tokenType TokenType, msg string) (Token, error) {
 }
 
 func (p *Parser) match(tokenTypes ...TokenType) bool {
-	hasToken := slices.ContainsFunc(tokenTypes, func(tt TokenType) bool {
-		return p.check(tt)
-	})
-	if hasToken {
+	if slices.ContainsFunc(tokenTypes, func(tokenType TokenType) bool {
+		return p.check(tokenType)
+	}) {
 		p.advance()
 		return true
 	}
