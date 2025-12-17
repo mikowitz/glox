@@ -8,10 +8,19 @@ import (
 	lox "github.com/mikowitz/glox"
 )
 
+const (
+	ExitSuccess      = 0
+	ExitUsageError   = 64
+	ExitSyntaxError  = 65
+	ExitInputError   = 66
+	ExitRuntimeError = 70
+	ExitIOError      = 74
+)
+
 func main() {
 	if len(os.Args) > 2 {
 		fmt.Fprintln(os.Stderr, "Usage: glox [script]")
-		os.Exit(64)
+		os.Exit(ExitUsageError)
 	} else if len(os.Args) == 2 {
 		exitCode := runFile(os.Args[1])
 		os.Exit(exitCode)
@@ -23,7 +32,7 @@ func main() {
 func runFile(filename string) int {
 	bytes, err := os.ReadFile(filename)
 	if err != nil {
-		return 66
+		return ExitInputError
 	}
 	return run(string(bytes))
 }
@@ -36,7 +45,7 @@ func runPrompt() {
 		if scanner.Scan() {
 			run(scanner.Text())
 		} else {
-			os.Exit(74)
+			os.Exit(ExitIOError)
 		}
 	}
 }
@@ -46,23 +55,27 @@ func run(source string) int {
 	tokens, err := scanner.ScanTokens()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
-		return 65 // Syntax error
+		return ExitSyntaxError
 	}
+
+	fmt.Printf("%+#v\n", tokens)
 
 	parser := lox.NewParser(tokens)
 	expr, err := parser.Parse()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
-		return 65 // Syntax error
+		return ExitSyntaxError
 	}
+
+	fmt.Printf("%+#v\n", expr)
 
 	interpreter := lox.NewInterpreter()
 	result, err := interpreter.Interpret(expr)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
-		return 70 // Runtime error
+		return ExitRuntimeError
 	}
 
 	fmt.Println(result)
-	return 0
+	return ExitSuccess
 }
