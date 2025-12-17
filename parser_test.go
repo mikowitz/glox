@@ -439,8 +439,7 @@ func TestParser_Expressions(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			asrt := assert.New(t)
-			runtime := &Runtime{}
-			parser := NewParser(runtime, tt.tokens)
+			parser := NewParser(tt.tokens)
 			expr, err := parser.expression()
 
 			if tt.wantErr {

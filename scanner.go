@@ -1,39 +1,41 @@
 package lox
 
 import (
+	"errors"
 	"fmt"
-	"os"
 	"strconv"
 )
 
 type Scanner struct {
-	runtime        *Runtime
 	source         string
 	Tokens         []Token
 	start, current int
 	line           int
-	hadError       bool
+	errors         []error
 }
 
-func NewScanner(lox *Runtime, source string) *Scanner {
+func NewScanner(source string) *Scanner {
 	return &Scanner{
-		runtime: lox,
-		source:  source,
-		line:    1,
+		source: source,
+		line:   1,
 	}
 }
 
-func (s *Scanner) ScanTokens() error {
+func (s *Scanner) ScanTokens() ([]Token, error) {
 	for !s.isAtEnd() {
 		s.start = s.current
 		err := s.scanToken()
 		if err != nil {
-			return err
+			s.errors = append(s.errors, err)
 		}
 	}
 
 	s.Tokens = append(s.Tokens, NewToken(EOF, "", nil, s.line))
-	return nil
+
+	if len(s.errors) > 0 {
+		return s.Tokens, errors.Join(s.errors...)
+	}
+	return s.Tokens, nil
 }
 
 func (s *Scanner) scanToken() error {
@@ -100,7 +102,6 @@ func (s *Scanner) scanToken() error {
 		} else if isAlpha(c) {
 			return s.handleIdentifier()
 		}
-		s.hadError = true
 		return s.reportError("unexpected character")
 	}
 	return nil
@@ -162,7 +163,6 @@ func (s *Scanner) handleString() error {
 	}
 
 	if s.isAtEnd() {
-		s.hadError = true
 		return s.reportError("unterminated string")
 	}
 
@@ -213,10 +213,7 @@ func (s *Scanner) isAtEnd() bool {
 }
 
 func (s *Scanner) reportError(msg string) error {
-	s.runtime.HadSyntaxError = true
-	err := fmt.Errorf("[line %d] %w: %s", s.line, ErrLoxSyntax, msg)
-	fmt.Fprintf(os.Stderr, "%v\n", err)
-	return err
+	return fmt.Errorf("[line %d] %w: %s", s.line, ErrLoxSyntax, msg)
 }
 
 func isDigit(r rune) bool {

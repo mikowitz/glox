@@ -1220,13 +1220,11 @@ func TestScanTokens(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			asrt := assert.New(t)
-			runtime := &Runtime{}
-			scanner := NewScanner(runtime, tt.source)
-			err := scanner.ScanTokens()
+			scanner := NewScanner(tt.source)
+			tokens, err := scanner.ScanTokens()
 
-			asrt.False(scanner.hadError)
 			asrt.NoError(err)
-			asrt.Equal(tt.expected, scanner.Tokens)
+			asrt.Equal(tt.expected, tokens)
 		})
 	}
 }
@@ -1328,11 +1326,8 @@ func TestScanTokens_InvalidCharacters(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			asrt := assert.New(t)
 
-			runtime := &Runtime{}
-			scanner := NewScanner(runtime, tt.source)
-			err := scanner.ScanTokens()
-
-			asrt.True(scanner.hadError)
+			scanner := NewScanner(tt.source)
+			_, err := scanner.ScanTokens()
 
 			asrt.Error(err)
 			asrt.ErrorIs(err, ErrLoxSyntax)

@@ -2,20 +2,17 @@ package lox
 
 import (
 	"fmt"
-	"os"
 	"slices"
 )
 
 type Parser struct {
-	runtime *Runtime
 	tokens  []Token
 	current int
 }
 
-func NewParser(lox *Runtime, tokens []Token) *Parser {
+func NewParser(tokens []Token) *Parser {
 	return &Parser{
-		runtime: lox,
-		tokens:  tokens,
+		tokens: tokens,
 	}
 }
 
@@ -196,16 +193,13 @@ func (p *Parser) previous() Token {
 }
 
 func (p *Parser) reportError(msg string) error {
-	p.runtime.HadSyntaxError = true
 	token := p.peek()
 	location := fmt.Sprintf("at '%s'", token.Lexeme)
 	if p.isAtEnd() {
 		location = "at end"
 	}
 
-	err := fmt.Errorf("[line %d] %w %s: %s", token.Line, ErrLoxSyntax, location, msg)
-	fmt.Fprintf(os.Stderr, "%v\n", err)
-	return err
+	return fmt.Errorf("[line %d] %w %s: %s", token.Line, ErrLoxSyntax, location, msg)
 }
 
 func (p *Parser) synchronize() {

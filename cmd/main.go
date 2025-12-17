@@ -9,62 +9,60 @@ import (
 )
 
 func main() {
-	runtime := &lox.Runtime{}
 	if len(os.Args) > 2 {
 		fmt.Fprintln(os.Stderr, "Usage: glox [script]")
 		os.Exit(64)
 	} else if len(os.Args) == 2 {
-		runFile(runtime, os.Args[1])
-		if runtime.HadSyntaxError {
-			os.Exit(65)
-		}
+		exitCode := runFile(os.Args[1])
+		os.Exit(exitCode)
 	} else {
-		runPrompt(runtime)
+		runPrompt()
 	}
 }
 
-func runFile(runtime *lox.Runtime, filename string) {
+func runFile(filename string) int {
 	bytes, err := os.ReadFile(filename)
 	if err != nil {
-		os.Exit(66)
+		return 66
 	}
-	run(runtime, string(bytes))
+	return run(string(bytes))
 }
 
-func runPrompt(runtime *lox.Runtime) {
+func runPrompt() {
 	scanner := bufio.NewScanner(os.Stdin)
 
 	for {
 		fmt.Fprint(os.Stdout, "> ")
 		if scanner.Scan() {
-			run(runtime, scanner.Text())
-			runtime.HadSyntaxError = false
-			runtime.HadRuntimeError = false
+			run(scanner.Text())
 		} else {
 			os.Exit(74)
 		}
 	}
 }
 
-func run(runtime *lox.Runtime, source string) {
-	scanner := lox.NewScanner(runtime, source)
-	scanner.ScanTokens()
-	if runtime.HadSyntaxError {
-		return
+func run(source string) int {
+	scanner := lox.NewScanner(source)
+	tokens, err := scanner.ScanTokens()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 65 // Syntax error
 	}
 
-	parser := lox.NewParser(runtime, scanner.Tokens)
-	expr, _ := parser.Parse()
-
-	if runtime.HadSyntaxError {
-		return
+	parser := lox.NewParser(tokens)
+	expr, err := parser.Parse()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 65 // Syntax error
 	}
 
-	interpreter := lox.NewInterpreter(runtime)
-	result := interpreter.Interpret(expr)
-	if runtime.HadRuntimeError {
-		return
+	interpreter := lox.NewInterpreter()
+	result, err := interpreter.Interpret(expr)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 70 // Runtime error
 	}
 
 	fmt.Println(result)
+	return 0
 }

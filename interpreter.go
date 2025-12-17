@@ -1,28 +1,27 @@
 package lox
 
 import (
+	"errors"
 	"fmt"
-	"os"
 )
 
 type Interpreter struct {
-	runtime *Runtime
-	result  any
-	errors  []error
+	result any
+	errors []error
 }
 
-func NewInterpreter(lox *Runtime) *Interpreter {
-	return &Interpreter{
-		runtime: lox,
-	}
+func NewInterpreter() *Interpreter {
+	return &Interpreter{}
 }
 
-func (i *Interpreter) Interpret(e Expr) any {
+func (i *Interpreter) Interpret(e Expr) (any, error) {
 	i.result = nil
 	i.errors = []error{}
-	i.runtime.HadRuntimeError = false
 	i.evaluate(e)
-	return i.result
+	if len(i.errors) > 0 {
+		return i.result, errors.Join(i.errors...)
+	}
+	return i.result, nil
 }
 
 func (i *Interpreter) evaluate(e Expr) {
@@ -132,10 +131,8 @@ func (i *Interpreter) VisitUnary(u Unary) {
 }
 
 func (i *Interpreter) reportError(err error, token Token) {
-	i.runtime.HadRuntimeError = true
 	err = fmt.Errorf("[line %d] %w: %s", token.Line, ErrLoxRuntime, err.Error())
 	i.errors = append(i.errors, err)
-	fmt.Fprintf(os.Stderr, "%v\n", err)
 }
 
 func isTruthy(object any) bool {

@@ -55,15 +55,15 @@ func TestInterpreter_Literals(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			asrt := assert.New(t)
-			interp := NewInterpreter(&Runtime{})
-			result := interp.Interpret(tt.expr)
+			interp := NewInterpreter()
+			result, err := interp.Interpret(tt.expr)
 
 			if tt.wantErr {
-				asrt.NotEmpty(interp.errors)
+				asrt.Error(err)
 				return
 			}
 
-			asrt.Empty(interp.errors)
+			asrt.NoError(err)
 			asrt.Equal(tt.expected, result)
 		})
 	}
@@ -175,16 +175,15 @@ func TestInterpreter_UnaryOperations(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			asrt := assert.New(t)
-			interp := NewInterpreter(&Runtime{})
-			result := interp.Interpret(tt.expr)
+			interp := NewInterpreter()
+			result, err := interp.Interpret(tt.expr)
 
 			if tt.wantErr {
-				asrt.NotEmpty(interp.errors)
-				asrt.ErrorIs(interp.errors[0], ErrLoxRuntime)
+				asrt.Error(err)
 				return
 			}
 
-			asrt.Empty(interp.errors)
+			asrt.NoError(err)
 			asrt.Equal(tt.expected, result)
 		})
 	}
@@ -265,16 +264,15 @@ func TestInterpreter_ArithmeticOperations(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			asrt := assert.New(t)
-			interp := NewInterpreter(&Runtime{})
-			result := interp.Interpret(tt.expr)
+			interp := NewInterpreter()
+			result, err := interp.Interpret(tt.expr)
 
 			if tt.wantErr {
-				asrt.NotEmpty(interp.errors)
-				asrt.ErrorIs(interp.errors[0], ErrLoxRuntime)
+				asrt.Error(err)
 				return
 			}
 
-			asrt.Empty(interp.errors)
+			asrt.NoError(err)
 			asrt.Equal(tt.expected, result)
 		})
 	}
@@ -337,16 +335,15 @@ func TestInterpreter_StringOperations(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			asrt := assert.New(t)
-			interp := NewInterpreter(&Runtime{})
-			result := interp.Interpret(tt.expr)
+			interp := NewInterpreter()
+			result, err := interp.Interpret(tt.expr)
 
 			if tt.wantErr {
-				asrt.NotEmpty(interp.errors)
-				asrt.ErrorIs(interp.errors[0], ErrLoxRuntime)
+				asrt.Error(err)
 				return
 			}
 
-			asrt.Empty(interp.errors)
+			asrt.NoError(err)
 			asrt.Equal(tt.expected, result)
 		})
 	}
@@ -472,16 +469,15 @@ func TestInterpreter_ComparisonOperations(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			asrt := assert.New(t)
-			interp := NewInterpreter(&Runtime{})
-			result := interp.Interpret(tt.expr)
+			interp := NewInterpreter()
+			result, err := interp.Interpret(tt.expr)
 
 			if tt.wantErr {
-				asrt.NotEmpty(interp.errors)
-				asrt.ErrorIs(interp.errors[0], ErrLoxRuntime)
+				asrt.Error(err)
 				return
 			}
 
-			asrt.Empty(interp.errors)
+			asrt.NoError(err)
 			asrt.Equal(tt.expected, result)
 		})
 	}
@@ -597,10 +593,10 @@ func TestInterpreter_EqualityOperations(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			asrt := assert.New(t)
-			interp := NewInterpreter(&Runtime{})
-			result := interp.Interpret(tt.expr)
+			interp := NewInterpreter()
+			result, err := interp.Interpret(tt.expr)
 
-			asrt.Empty(interp.errors)
+			asrt.NoError(err)
 			asrt.Equal(tt.expected, result)
 		})
 	}
@@ -642,10 +638,10 @@ func TestInterpreter_GroupedExpressions(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			asrt := assert.New(t)
-			interp := NewInterpreter(&Runtime{})
-			result := interp.Interpret(tt.expr)
+			interp := NewInterpreter()
+			result, err := interp.Interpret(tt.expr)
 
-			asrt.Empty(interp.errors)
+			asrt.NoError(err)
 			asrt.Equal(tt.expected, result)
 		})
 	}
@@ -737,10 +733,10 @@ func TestInterpreter_ComplexExpressions(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			asrt := assert.New(t)
-			interp := NewInterpreter(&Runtime{})
-			result := interp.Interpret(tt.expr)
+			interp := NewInterpreter()
+			result, err := interp.Interpret(tt.expr)
 
-			asrt.Empty(interp.errors)
+			asrt.NoError(err)
 			asrt.Equal(tt.expected, result)
 		})
 	}
@@ -795,11 +791,10 @@ func TestInterpreter_TypeErrors(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			asrt := assert.New(t)
-			interp := NewInterpreter(&Runtime{})
-			interp.Interpret(tt.expr)
+			interp := NewInterpreter()
+			_, err := interp.Interpret(tt.expr)
 
-			asrt.NotEmpty(interp.errors)
-			asrt.ErrorIs(interp.errors[0], ErrLoxRuntime)
+			asrt.Error(err)
 		})
 	}
 }
@@ -871,10 +866,10 @@ func TestInterpreter_Truthiness(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			asrt := assert.New(t)
-			interp := NewInterpreter(&Runtime{})
-			result := interp.Interpret(tt.expr)
+			interp := NewInterpreter()
+			result, err := interp.Interpret(tt.expr)
 
-			asrt.Empty(interp.errors)
+			asrt.NoError(err)
 			asrt.Equal(tt.expected, result)
 		})
 	}
